@@ -1,4 +1,4 @@
-spring:
+`spring:
   quartz:
     job-store-type: jdbc
     properties:
@@ -12,7 +12,9 @@ spring:
             clusterCheckinInterval: 20000
             class: org.quartz.impl.jdbcjobstore.JobStoreTX
             driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
-            tablePrefix: QRTZ_
+            tablePrefix: QRTZ_`
+
+            
 
 
 
