@@ -2,28 +2,38 @@ version: '3.8'
 
 services:
   # --- 1. Kafka Broker / Kontroler (KRaft Mode) ---
+  #---- Particular describe of followed kafka : https://developer.confluent.io/confluent-tutorials/kafka-on-docker/
   broker:
-    image: apache/kafka:latest
+    image: confluentinc/cp-kafka:8.0.0
     hostname: broker
     container_name: broker
     ports:
-      - 9092:9092
+      - "9092:9092"
+      - "9101:9101"
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092'
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
-      KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
-      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    healthcheck:
+      test: [ "CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
   # --- 2. Kafka UI ---
   kafka-ui:
     image: provectuslabs/kafka-ui
@@ -35,20 +45,5 @@ services:
     restart: always
     environment:
       - KAFKA_CLUSTERS_0_NAME=broker
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=broker:9093
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=broker:29092
       # UI w trybie KRaft nie musi podawać adresu Zookeepera
-
-  # --- 3. Kafka Exporter (Zbiera metryki JMX z Kafki) ---
-#  kafka-exporter:
-#    image: danielqsj/kafka-exporter:v1.7.0
-#    hostname: kafka-exporter
-#    ports:
-#      - "9308:9308"
-#    depends_on:
-#      - broker
-#    environment:
-#      # Adres JMX zdefiniowany na brokerze (port 9999)
-#      KAFKA_EXPORTER_JMX_URL: broker:9999
-#      # Lista brokerów
-#      KAFKA_EXPORTER_KAFKA_SERVER: broker:29092
-#      KAFKA_EXPORTER_CHECK_CONSUMER_GROUPS: "true"
