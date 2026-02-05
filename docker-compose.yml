@@ -47,3 +47,28 @@ services:
       - KAFKA_CLUSTERS_0_NAME=broker
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=broker:29092
       # UI w trybie KRaft nie musi podawać adresu Zookeepera
+
+  # --- 3. Kafka Exporter (Wystawia metryki JMX z Kafki, aby klient mógł się do nich podłączyc) ---
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:latest
+    container_name: kafka-exporter
+    depends_on:
+      broker:
+        condition: service_healthy
+    command:
+      # Łączymy się z brokerem po wewnętrznym adresie sieci Docker
+      - --kafka.server=broker:29092
+    ports:
+      - "9308:9308"
+    restart: always
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - kafka-exporter
