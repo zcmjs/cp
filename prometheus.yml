@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 10s # Jak często pobierać dane
+
+scrape_configs:
+  - job_name: 'kafka_metrics'
+    static_configs:
+      # Tutaj podajemy nazwę serwisu z docker-compose (kafka-exporter)
+      # a nie localhost, ponieważ Prometheus też działa w kontenerze!
+      - targets: ['kafka-exporter:9308']
