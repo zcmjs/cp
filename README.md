@@ -1,21 +1,27 @@
-Wynik (Boolean),Testowany ciąg (UUID),Opis przypadku
+Przypadki pozytywne (Dopasowania)
 
-True,550e8400-e29b-41d4-a716-446655440000,Standardowy UUID v4 (małe litery)
+    true,"genesis"
 
-True,6EC0BD7F-11C0-43DA-975E-2A8AD9EB0D83,Standardowy UUID v4 (wielkie litery)
+    true,"GENESIS"
 
-True,00000000-0000-0000-0000-000000000000,"Nil UUID (pusty, ale poprawny technicznie)"
+    true,"Genesis"
 
-True,123e4567-e89b-12d3-a456-426614174000,Starszy UUID v1
+    true,"GeNeSiS"
 
-False,550e8400-e29b-41d4-a716-44665544000,Błąd: Za krótki (brakuje jednego znaku na końcu)
+    true,"gEnEsIs"
 
-False,z50e8400-e29b-41d4-a716-446655440000,Błąd: Niedozwolony znak 'z' (poza zakresem hex)
+Przypadki negatywne (Błędy)
 
-False,550e8400e29b41d4a716446655440000,Błąd: Brak myślników
+    false,"genes" (za krótkie – brak "is")
 
-False,550e8400-e29b-41d4-a716-446655440000-1,Błąd: Za długi (dodatkowy znak)
+    false,"genesiss" (za długie – podwójne "s")
 
-False,550e8400-e29b-41d4-a716-44665544000g,Błąd: Znak 'g' na końcu
+    false,"genesis " (niedozwolona spacja na końcu)
 
-False,550e8400--e29b-41d4-a716-446655440000,Błąd: Podwójny myślnik
+    false," genesis" (niedozwolona spacja na początku)
+
+    false,"gen3sis" (cyfra zamiast litery "e")
+
+    false,"gen-esis" (znak specjalny wewnątrz)
+
+    false,"GENES1S" (cyfra zamiast litery "i")
