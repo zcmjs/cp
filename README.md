@@ -1,52 +1,47 @@
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.MountableFile;
 
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class HazelcastTestContainer {
+Set<String> wanted = Set.of(
+    "lib-a.jar",
+    "lib-b.jar",
+    "lib-c.jar"
+);
 
-    public static void main(String[] args) throws Exception {
+GenericContainer<?> container =
+    new GenericContainer<>("hazelcast/hazelcast:5.3");
 
-        String jarPath = "app.jar";
+try (JarFile jar = new JarFile("app.jar")) {
 
-        GenericContainer<?> hz =
-            new GenericContainer<>("hazelcast/hazelcast:5.3");
+    jar.stream()
+        .filter(e -> e.getName().startsWith("BOOT-INF/lib/"))
+        .forEach(e -> {
+            String fileName = e.getName()
+                .substring("BOOT-INF/lib/".length());
 
-        try (JarFile jar = new JarFile(jarPath)) {
+            if (!wanted.contains(fileName)) return;
 
-            jar.stream()
-                .filter(e -> e.getName().startsWith("BOOT-INF/lib/") && e.getName().endsWith(".jar"))
-                .forEach(e -> {
-                    try {
-                        String fileName = e.getName().substring("BOOT-INF/lib/".length());
+            try {
+                var temp = Files.createTempFile("lib-", ".jar");
 
-                        MountableFile mf = MountableFile.forHostPath(
-                            extractToTempFile(jar, e)
-                        );
+                try (var in = jar.getInputStream(e)) {
+                    Files.copy(in, temp, StandardCopyOption.REPLACE_EXISTING);
+                }
 
-                        hz.withCopyFileToContainer(
-                            mf,
-                            "/opt/hazelcast/lib/" + fileName
-                        );
+                container.withCopyFileToContainer(
+                    MountableFile.forHostPath(temp.toString()),
+                    "/opt/hazelcast/lib/" + fileName
+                );
 
-                    } catch (Exception ex) {
-                        throw new RuntimeException(ex);
-                    }
-                });
-        }
-
-        hz.start();
-    }
-
-    static String extractToTempFile(JarFile jar, JarEntry entry) throws Exception {
-
-        var temp = java.nio.file.Files.createTempFile("lib-", ".jar");
-
-        try (var in = jar.getInputStream(entry)) {
-            java.nio.file.Files.copy(in, temp, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-        }
-
-        return temp.toAbsolutePath().toString();
-    }
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        });
 }
+
+container.start();
