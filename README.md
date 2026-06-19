@@ -99,3 +99,5 @@ Dlaczego to podejście jest idealne?
 
 Grand Finale:
 Testowanie asynchroniczne bez zwracania wartości wymaga użycia zatrzasku.
+
+https://medium.com/@AlexanderObregon/how-spring-boot-configures-custom-thread-pools-for-async-processing-2f05d6fb3e42
